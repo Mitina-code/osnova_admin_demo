@@ -1,0 +1,667 @@
+<title>ОСНОВА · Админка</title>
+<style>
+/* =====================================================================
+   ZT Light UI — админка ОСНОВЫ.
+   Та же визуальная система, что и в рабочем месте цензора:
+   токены из design_tokens.json, только светлая тема, белые поля.
+   ===================================================================== */
+:root{
+  --primary:#6F3DFF; --primary-hover:#5E2FE8; --secondary:#A78BFA;
+  --lilac:#EDE9FE; --mint:#10B981; --soft-mint:#E0F7F1;
+  --soft-blue:#DBEAFE; --soft-pink:#FCE7F3; --soft-beige:#FDECD8;
+  --bg:#FAFAFC; --surface:#FFFFFF; --text:#1F2937; --muted:#6B7280;
+  --border:#E5E7EB; --border-soft:#F1F2F5;
+  --danger:#DC2626; --warning:#D97706; --success:#059669;
+  --r-card:18px; --r-btn:13px; --r-input:11px;
+  --shadow:0 1px 2px rgba(31,41,55,.04), 0 4px 16px rgba(31,41,55,.05);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:Inter,Arial,Helvetica,sans-serif; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--primary); outline-offset:2px; border-radius:8px}
+.tnum{font-variant-numeric:tabular-nums}
+svg{flex:none}
+
+.app{display:grid; grid-template-columns:240px 1fr; min-height:100%}
+.sidebar{background:var(--surface); border-right:1px solid var(--border); padding:20px 14px 16px;
+  display:flex; flex-direction:column; gap:4px; position:sticky; top:env(safe-area-inset-top,0px); height:100vh}
+.brand{display:flex; align-items:center; gap:10px; padding:2px 8px 20px}
+.brand img{height:26px; width:auto; display:block}
+.brand-name{font-size:17px; font-weight:700}
+.brand-sub{font-size:12px; color:var(--muted); margin-top:1px}
+.rolebox{background:var(--lilac); border:1px solid #D6CCFB; border-radius:12px; padding:10px 12px; margin-bottom:16px}
+.rolebox .lab{font-size:11px; color:var(--primary); text-transform:uppercase; letter-spacing:.7px; font-weight:700}
+.rolebox .val{font-weight:650; margin-top:2px; font-size:15px; color:var(--primary)}
+.nav{display:flex; flex-direction:column; gap:3px}
+.nav button{display:flex; align-items:center; gap:11px; width:100%; background:transparent; border:0;
+  color:var(--muted); text-align:left; padding:10px 12px; border-radius:11px; font-size:15px; font-weight:550}
+.nav button:hover{background:var(--bg); color:var(--text)}
+.nav button.active{background:var(--lilac); color:var(--primary); font-weight:650}
+.nav .ico{display:grid; place-items:center; width:20px; height:20px}
+.nav .badge{margin-left:auto; font-size:13px; font-variant-numeric:tabular-nums}
+.side-foot{margin-top:auto; padding:14px 10px 0; border-top:1px solid var(--border); color:var(--muted); font-size:12px; line-height:1.5}
+
+.main{min-width:0; display:flex; flex-direction:column}
+.topbar{height:68px; background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 28px;
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20}
+.top-title{font-size:17px; font-weight:650}
+.top-sub{color:var(--muted); font-size:13px}
+.user{display:flex; align-items:center; gap:10px}
+.avatar{width:36px; height:36px; border-radius:11px; background:var(--soft-blue); color:#2563EB;
+  display:grid; place-items:center; font-weight:700; font-size:13px}
+.content{padding:26px 28px 64px; max-width:1200px; width:100%}
+.page-head{margin-bottom:22px}
+.page-head h1{margin:0; font-size:30px; font-weight:700; letter-spacing:-.5px}
+.page-head p{margin:5px 0 0; color:var(--muted); font-size:15px}
+
+.stats{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:22px}
+.stat{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); padding:18px 20px}
+.stat .badge-ico{width:34px; height:34px; border-radius:10px; display:grid; place-items:center; margin-bottom:12px}
+.stat .k{font-size:13px; color:var(--muted); margin-bottom:6px}
+.stat .v{font-size:27px; font-weight:700; letter-spacing:-.6px; line-height:1.1}
+.stat .d{font-size:13px; color:var(--muted); margin-top:5px}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); padding:22px 24px; margin-bottom:14px}
+.card h3{margin:0 0 12px; font-size:16px; font-weight:650}
+.split{display:grid; grid-template-columns:1.3fr 1fr; gap:14px; align-items:start}
+h2.sect{font-size:21px; font-weight:700; margin:30px 0 14px; letter-spacing:-.3px}
+
+.btn{display:inline-flex; align-items:center; gap:8px; justify-content:center; border:1px solid var(--border);
+  background:var(--surface); color:var(--text); border-radius:var(--r-btn); padding:11px 18px;
+  font-weight:600; font-size:14.5px}
+.btn:hover{background:var(--bg); border-color:var(--secondary)}
+.btn.primary{background:var(--primary); border-color:var(--primary); color:#fff}
+.btn.primary:hover{background:var(--primary-hover)}
+.btn.danger{background:var(--surface); border-color:var(--border); color:var(--danger)}
+.btn.sm{padding:8px 13px; font-size:13.5px; border-radius:10px}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+
+.chip{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--bg);
+  border-radius:999px; padding:4px 11px; font-size:12.5px; color:var(--muted); white-space:nowrap; font-weight:550}
+.chip.g{background:var(--soft-mint); border-color:#BFE9DC; color:var(--success)}
+.chip.o{background:var(--soft-beige); border-color:#F3D5AC; color:var(--warning)}
+.chip.r{background:var(--soft-pink); border-color:#F6C6DC; color:var(--danger)}
+.chip.a{background:var(--lilac); border-color:#D6CCFB; color:var(--primary)}
+
+.fld{display:block; margin-bottom:16px; font-size:13.5px; color:var(--muted); font-weight:550}
+.fld input, .fld textarea, .fld select{display:block; width:100%; margin-top:7px; background:var(--surface);
+  color:var(--text); border:1px solid var(--border); border-radius:var(--r-input); padding:11px 14px;
+  font-size:15px; line-height:1.5}
+.fld textarea{min-height:130px; resize:vertical}
+.fld input:focus, .fld textarea:focus, .fld select:focus{outline:0; border-color:var(--primary); box-shadow:0 0 0 3px rgba(111,61,255,.14)}
+
+.note{border:1px solid var(--border); border-left:3px solid var(--primary); background:var(--surface);
+  border-radius:0 14px 14px 0; padding:14px 18px; font-size:14.5px; margin:14px 0}
+.note.warn{border-color:#F3D5AC; border-left-color:var(--warning); background:var(--soft-beige); color:#8A5A0B}
+.note.ok{border-color:#BFE9DC; border-left-color:var(--success); background:var(--soft-mint); color:#0A6B4F}
+.note.bad{border-color:#F6C6DC; border-left-color:var(--danger); background:var(--soft-pink); color:#8E1F32}
+
+.drop{border:2px dashed var(--border); border-radius:16px; padding:36px 24px; text-align:center;
+  background:var(--surface); transition:border-color .12s, background .12s}
+.drop.over{border-color:var(--primary); background:var(--lilac)}
+.drop .ico{width:52px; height:52px; margin:0 auto 14px; border-radius:15px; background:var(--lilac);
+  color:var(--primary); display:grid; place-items:center}
+.drop b{display:block; font-size:17px; margin-bottom:6px}
+.drop span{color:var(--muted); font-size:14px}
+input[type=file]{display:none}
+
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{background:var(--bg); text-align:left; padding:10px 12px; font-weight:650; color:var(--muted);
+  border-bottom:1px solid var(--border); position:sticky; top:0}
+td{padding:10px 12px; border-bottom:1px solid var(--border-soft); vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.bad td{background:var(--soft-pink)}
+.tw{overflow:auto; max-height:380px; border:1px solid var(--border); border-radius:12px}
+
+.rows{display:flex; flex-direction:column; gap:10px}
+.row{display:grid; grid-template-columns:4px 1fr auto; gap:16px; align-items:start; background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--r-card); padding:16px 18px}
+.row:hover{border-color:var(--secondary); box-shadow:var(--shadow)}
+.stripe{border-radius:3px; align-self:stretch; min-height:44px; background:var(--border)}
+.stripe.wait{background:var(--warning)} .stripe.done{background:var(--success)}
+.row .who{font-weight:650; margin-bottom:4px}
+.row .meta{color:var(--muted); font-size:13px}
+.row .acts{display:flex; gap:8px; align-items:center}
+
+.msg{background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); padding:18px 20px; margin-bottom:10px}
+.msg.pin{border-color:var(--primary)}
+.msg .t{font-weight:650; font-size:16px}
+.msg .b{margin-top:10px; line-height:1.7}
+
+.code{background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;
+  font-family:Consolas,"Courier New",monospace; font-size:13px; overflow-x:auto; white-space:pre; line-height:1.7}
+
+.back{position:fixed; inset:0; background:rgba(31,41,55,.42); display:grid; place-items:center; padding:24px; z-index:60}
+.modal{background:var(--surface); border:1px solid var(--border); border-radius:20px; width:min(760px,100%);
+  max-height:86vh; display:flex; flex-direction:column; box-shadow:0 24px 64px rgba(31,41,55,.22)}
+.mh{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:22px 24px 18px; border-bottom:1px solid var(--border)}
+.mh h3{margin:0; font-size:19px; font-weight:700}
+.mb{padding:20px 24px; overflow:auto}
+.mf{padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap}
+.x{background:none; border:0; color:var(--muted); font-size:22px; line-height:1; padding:2px 8px; border-radius:8px}
+.x:hover{background:var(--bg); color:var(--text)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:9px 16px; font-size:14px}
+.kv .k{color:var(--muted)}
+
+.toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:var(--text); color:#fff;
+  padding:13px 22px; border-radius:13px; font-size:14px; box-shadow:0 12px 32px rgba(31,41,55,.28); z-index:90}
+.empty{text-align:center; padding:48px 20px; color:var(--muted); background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--r-card)}
+.empty b{display:block; color:var(--text); font-size:17px; margin-bottom:5px}
+
+@media (max-width:1180px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} .split{grid-template-columns:1fr} }
+@media (max-width:1000px){
+  .app{grid-template-columns:72px 1fr}
+  .brand-text,.rolebox,.side-foot{display:none}
+  .nav button{justify-content:center; padding:11px 0}
+  .nav button span:not(.ico){display:none}
+  .content{padding:20px 18px 56px} .topbar{padding:0 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<script src="data-reference.js"></script>
+<script src="data-shift-peak.js"></script>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img id="logo" alt="ЗТ" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkxIiBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgMTkxIDY0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNNDQuNDI0MSA3LjExMzI0QzQxLjM0NjEgNC4xOTk3OCAzOS4xNjQzIDIuNTM0MiAzNi43NjU2IDEuNzU0NzlDMzMuNjY4MiAwLjc0ODQwMiAzMC4zMzE4IDAuNzQ4NDAzIDI3LjIzNDQgMS43NTQ3OUMyMy43MTMyIDIuODk4OSAyMC42NTk2IDUuOTUyNTMgMTQuNTUyMyAxMi4wNTk4TDEyLjA1OTggMTQuNTUyM0M1Ljk1MjUzIDIwLjY1OTYgMi44OTg5IDIzLjcxMzIgMS43NTQ3OSAyNy4yMzQ0QzAuNzQ4NDAyIDMwLjMzMTggMC43NDg0MDMgMzMuNjY4MiAxLjc1NDc5IDM2Ljc2NTZDMi44OTg5IDQwLjI4NjggNS45NTI1MyA0My4zNDA0IDEyLjA1OTggNDkuNDQ3N0wxNC41NTIzIDUxLjk0MDJDMjAuNjU5NiA1OC4wNDc1IDIzLjcxMzIgNjEuMTAxMSAyNy4yMzQ0IDYyLjI0NTJDMzAuMzMxOCA2My4yNTE2IDMzLjY2ODIgNjMuMjUxNiAzNi43NjU2IDYyLjI0NTJDNDAuMjg2OCA2MS4xMDExIDQzLjM0MDQgNTguMDQ3NSA0OS40NDc3IDUxLjk0MDJMNTEuOTQwMiA0OS40NDc3QzU4LjA0NzUgNDMuMzQwNCA2MS4xMDExIDQwLjI4NjggNjIuMjQ1MiAzNi43NjU2QzYzLjI1MTYgMzMuNjY4MiA2My4yNTE2IDMwLjMzMTggNjIuMjQ1MiAyNy4yMzQ0QzYxLjQ2NTggMjQuODM1NyA1OS44MDAyIDIyLjY1MzkgNTYuODg2OCAxOS41NzU5TDQ3LjU3OSAyOC44ODM2TDQ4LjIwMjIgMjkuNTA2N0M0OS4wNzQ2IDMwLjM3OTIgNDkuNTEwOSAzMC44MTU0IDQ5LjY3NDMgMzEuMzE4NEM0OS44MTgxIDMxLjc2MDkgNDkuODE4MSAzMi4yMzc2IDQ5LjY3NDMgMzIuNjhDNDkuNTEwOSAzMy4xODMxIDQ5LjA3NDYgMzMuNjE5MyA0OC4yMDIyIDM0LjQ5MThMMzQuNDkzMyA0OC4yMDA3QzMzLjYyMDggNDkuMDczMSAzMy4xODQ2IDQ5LjUwOTQgMzIuNjgxNiA0OS42NzI4QzMyLjIzOTEgNDkuODE2NiAzMS43NjI0IDQ5LjgxNjYgMzEuMzIgNDkuNjcyOEMzMC44MTY5IDQ5LjUwOTQgMzAuMzgwNyA0OS4wNzMxIDI5LjUwODIgNDguMjAwN0wxNS43OTkzIDM0LjQ5MThDMTQuOTI2OSAzMy42MTkzIDE0LjQ5MDYgMzMuMTgzMSAxNC4zMjcyIDMyLjY4QzE0LjE4MzQgMzIuMjM3NiAxNC4xODM0IDMxLjc2MDkgMTQuMzI3MiAzMS4zMTg0QzE0LjQ5MDYgMzAuODE1NCAxNC45MjY5IDMwLjM3OTIgMTUuNzk5MyAyOS41MDY3TDI5LjUwODIgMTUuNzk3OEMzMC4zODA3IDE0LjkyNTQgMzAuODE2OSAxNC40ODkxIDMxLjMyIDE0LjMyNTdDMzEuNzYyNCAxNC4xODE5IDMyLjIzOTEgMTQuMTgxOSAzMi42ODE2IDE0LjMyNTdDMzMuMTg0NiAxNC40ODkxIDMzLjYyMDggMTQuOTI1NCAzNC40OTMzIDE1Ljc5NzhMMzUuMTE2NCAxNi40MjFMNDQuNDI0MSA3LjExMzI0WiIgZmlsbD0iIzAwQkY3RiIvPgo8cGF0aCBkPSJNNzcuNDQ3NyA1MS45NDAyQzcxLjM0MDQgNTguMDQ3NSA2OC4yODY4IDYxLjEwMTEgNjQuNzY1NiA2Mi4yNDUyQzYxLjY2ODIgNjMuMjUxNiA1OC4zMzE4IDYzLjI1MTYgNTUuMjM0NCA2Mi4yNDUyQzUyLjgzNTYgNjEuNDY1OCA1MC42NTM5IDU5LjgwMDIgNDcuNTc1OSA1Ni44ODY4TDU2Ljg4MzYgNDcuNTc5TDU3LjUwNjcgNDguMjAyMkM1OC4zNzkyIDQ5LjA3NDYgNTguODE1NCA0OS41MTA5IDU5LjMxODQgNDkuNjc0M0M1OS43NjA5IDQ5LjgxODEgNjAuMjM3NiA0OS44MTgxIDYwLjY4IDQ5LjY3NDNDNjEuMTgzMSA0OS41MTA5IDYxLjYxOTMgNDkuMDc0NiA2Mi40OTE4IDQ4LjIwMjJMNzYuMjAwNyAzNC40OTMzQzc3LjA3MzEgMzMuNjIwOCA3Ny41MDk0IDMzLjE4NDYgNzcuNjcyOCAzMi42ODE2Qzc3LjgxNjYgMzIuMjM5MSA3Ny44MTY2IDMxLjc2MjQgNzcuNjcyOCAzMS4zMkM3Ny41MDk0IDMwLjgxNjkgNzcuMDczMSAzMC4zODA3IDc2LjIwMDcgMjkuNTA4Mkw2Mi40OTE4IDE1Ljc5OTNDNjEuNjE5MyAxNC45MjY5IDYxLjE4MzEgMTQuNDkwNiA2MC42OCAxNC4zMjcyQzYwLjIzNzYgMTQuMTgzNCA1OS43NjA5IDE0LjE4MzQgNTkuMzE4NCAxNC4zMjcyQzU4LjgxNTQgMTQuNDkwNiA1OC4zNzkyIDE0LjkyNjkgNTcuNTA2NyAxNS43OTkzTDQzLjc5NzggMjkuNTA4MkM0Mi45MjU0IDMwLjM4MDcgNDIuNDg5MSAzMC44MTY5IDQyLjMyNTcgMzEuMzJDNDIuMTgxOSAzMS43NjI0IDQyLjE4MTkgMzIuMjM5MSA0Mi4zMjU3IDMyLjY4MTZDNDIuNDg5MSAzMy4xODQ2IDQyLjkyNTQgMzMuNjIwOCA0My43OTc4IDM0LjQ5MzNMNDQuNDIxIDM1LjExNjRMMzUuMTEzMiA0NC40MjQxQzMyLjE5OTggNDEuMzQ2MSAzMC41MzQyIDM5LjE2NDMgMjkuNzU0OCAzNi43NjU2QzI4Ljc0ODQgMzMuNjY4MiAyOC43NDg0IDMwLjMzMTggMjkuNzU0OCAyNy4yMzQ0QzMwLjg5ODkgMjMuNzEzMiAzMy45NTI1IDIwLjY1OTYgNDAuMDU5OCAxNC41NTIzTDQyLjU1MjMgMTIuMDU5OEM0OC42NTk2IDUuOTUyNTMgNTEuNzEzMiAyLjg5ODkgNTUuMjM0NCAxLjc1NDc5QzU4LjMzMTggMC43NDg0MDIgNjEuNjY4MiAwLjc0ODQwMyA2NC43NjU2IDEuNzU0NzlDNjguMjg2OCAyLjg5ODkgNzEuMzQwNCA1Ljk1MjUzIDc3LjQ0NzcgMTIuMDU5OEw3OS45NDAyIDE0LjU1MjNDODYuMDQ3NSAyMC42NTk2IDg5LjEwMTEgMjMuNzEzMiA5MC4yNDUyIDI3LjIzNDRDOTEuMjUxNiAzMC4zMzE4IDkxLjI1MTYgMzMuNjY4MiA5MC4yNDUyIDM2Ljc2NTZDODkuMTAxMSA0MC4yODY4IDg2LjA0NzUgNDMuMzQwNCA3OS45NDAyIDQ5LjQ0NzdMNzcuNDQ3NyA1MS45NDAyWiIgZmlsbD0iIzY3M0RDQyIvPgo8cGF0aCBkPSJNMTQ0IDEyLjUwMjJDMTQ0IDEzLjY0NjcgMTQzLjUxNyAxNC42NDgyIDE0Mi45NzcgMTUuNjI1MUMxNDIuNTA5IDE2LjQ3MTEgMTQxLjc3MSAxNy42NjUzIDE0MC41OTkgMTkuMzA1M0MxMzguMjYxIDIyLjU3OSAxMzQuMTIxIDI3LjczNTUgMTI2Ljc4NiAzNS41NzY1QzEyMS42NTUgNDEuMDYxNyAxMTguMjg1IDQ1LjEwMjggMTE2IDQ4LjAwMjJIMTM4LjA1N0MxNDAuNTc5IDQ4LjAwMjIgMTQyLjQ1MiA1MC4zNzE5IDE0MS45MDUgNTIuODdMMTQxLjY4NiA1My44N0MxNDEuMjg1IDU1LjcwMDEgMTM5LjY4NiA1Ny4wMDIyIDEzNy44MzggNTcuMDAyMkgxMDcuNUMxMDUuMDE1IDU3LjAwMjIgMTAzIDU0Ljk4NzUgMTAzIDUyLjUwMjJDMTAzIDUxLjM1NzggMTAzLjQ4MyA1MC4zNTYzIDEwNC4wMjMgNDkuMzc5NEMxMDQuNDkxIDQ4LjUzMzQgMTA1LjIyOSA0Ny4zMzkyIDEwNi40MDEgNDUuNjk5MkMxMDguNzM5IDQyLjQyNTQgMTEyLjg3OSAzNy4yNjkgMTIwLjIxNCAyOS40MjhDMTI1LjM0NSAyMy45NDI4IDEyOC43MTUgMTkuOTAxNyAxMzEgMTcuMDAyMkgxMDguOTQzQzEwNi40MjEgMTcuMDAyMiAxMDQuNTQ4IDE0LjYzMjYgMTA1LjA5NSAxMi4xMzQ1TDEwNS4zMTQgMTEuMTM0NUMxMDUuNzE1IDkuMzA0MzcgMTA3LjMxNCA4LjAwMjI1IDEwOS4xNjIgOC4wMDIyNUgxMzkuNUMxNDEuOTg1IDguMDAyMjUgMTQ0IDEwLjAxNyAxNDQgMTIuNTAyMloiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xNTEuNDA1IDEwLjgwMzZDMTUxLjg5IDkuMjU1MDEgMTUzLjI2NiA4LjE1MzQ2IDE1NC44ODUgOC4wMTY1QzE1NS4wNTMgOC4wMDIyNSAxNTUuMjQ0IDguMDAyMjUgMTU1LjYyNCA4LjAwMjI1SDE4NS4zNzZDMTg1Ljk0MSA4LjAwMjI1IDE4Ni4yMjQgNy45ODcyOSAxODYuNDQ2IDguMDEyMjVDMTg4LjYzNCA4LjI1NzU0IDE5MC4yMTIgMTAuMjUwNyAxODkuOTc3IDEyLjQzNkMxODkuOTE0IDEzLjAyMTMgMTg5Ljc3MSAxMy42Mzg1IDE4OS41OTUgMTQuMjAwOUMxODkuMTEgMTUuNzQ5NSAxODcuNzM0IDE2Ljg1MSAxODYuMTE1IDE2Ljk4OEMxODUuOTQ3IDE3LjAwMjIgMTg1Ljc1NyAxNy4wMDIyIDE4NS4zNzYgMTcuMDAyMkgxNzVWNTIuNTAyMkMxNzUgNTIuOTY2NiAxNzUgNTMuMTk4OCAxNzQuOTgxIDUzLjM5NDNDMTc0Ljc5NCA1NS4yOTM0IDE3My4yOTEgNTYuNzk1OSAxNzEuMzkyIDU2Ljk4M0MxNzEuMTk3IDU3LjAwMjIgMTcwLjk2NCA1Ny4wMDIyIDE3MC41IDU3LjAwMjJDMTcwLjAzNiA1Ny4wMDIyIDE2OS44MDMgNTcuMDAyMiAxNjkuNjA4IDU2Ljk4M0MxNjcuNzA5IDU2Ljc5NTkgMTY2LjIwNiA1NS4yOTM0IDE2Ni4wMTkgNTMuMzk0M0MxNjYgNTMuMTk4OCAxNjYgNTIuOTY2NiAxNjYgNTIuNTAyMlYxNy4wMDIyTDE1NS42MjQgMTcuMDAyM0MxNTUuMDU5IDE3LjAwMjMgMTU0Ljc3NiAxNy4wMTcyIDE1NC41NTQgMTYuOTkyM0MxNTIuMzY2IDE2Ljc0NyAxNTAuNzg4IDE0Ljc1MzggMTUxLjAyMyAxMi41Njg1QzE1MS4wODYgMTEuOTgzMiAxNTEuMjI5IDExLjM2NiAxNTEuNDA1IDEwLjgwMzZaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K">
+      <div class="brand-text">
+        <div class="brand-name">ОСНОВА</div>
+        <div class="brand-sub">админка</div>
+      </div>
+    </div>
+    <div class="rolebox">
+      <div class="lab">Режим работы</div>
+      <div class="val">Продакт</div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">Настройки касаются всех учреждений<br>на контуре ОСНОВЫ</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="top-title" id="topTitle">Обзор</div>
+        <div class="top-sub" id="topSub">Состояние контура на 28 августа 2026</div>
+      </div>
+      <div class="user">
+        <div class="avatar">ПМ</div>
+        <div>
+          <div style="font-weight:650; font-size:14px">Елена Митина</div>
+          <div class="top-sub">продакт ОСНОВЫ</div>
+        </div>
+      </div>
+    </header>
+    <section class="content" id="content"></section>
+  </main>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+/* =======================================================================
+   ОСНОВА · админка
+   Рабочее место продакта: загрузка данных, ответы на обращения,
+   сообщения в канал учреждений.
+
+   Данные берутся из тех же файлов, что и рабочее место цензора
+   (data-reference.js, data-shift-peak.js) — общий модуль данных.
+   Ничего не сохраняется: перезагрузка возвращает всё к началу.
+   ======================================================================= */
+
+const REF = window.OSNOVA_REF || { appeals: [], channel: [], assignments: [], legal: [] };
+const MATERIALS = (window.OSNOVA_SETS && window.OSNOVA_SETS['shift-peak']) || { materials: [], total: 0 };
+
+/* ---------------- иконки ---------------- */
+const SVG = d => '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+  'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+const ICON = {
+  home:    SVG('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>'),
+  upload:  SVG('<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/>'),
+  mail:    SVG('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>'),
+  channel: SVG('<path d="M21 12a8 8 0 01-11.5 7.2L3 21l1.8-6.5A8 8 0 1121 12z"/>'),
+  db:      SVG('<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),
+  clock:   SVG('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+  check:   SVG('<path d="M20 6L9 17l-5-5"/>'),
+  alert:   SVG('<path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/>'),
+};
+
+/* ---------------- состояние ---------------- */
+const S = {
+  view: 'home',
+  загружено: { когда: '28.08.2026 07:40', строк: MATERIALS.total, файл: 'выгрузка_ЗТ_28-08.csv' },
+  разбор: null,          // результат разбора выбранного файла
+  канал: [...REF.channel],
+  обращения: REF.appeals.map(a => ({ ...a })),
+};
+
+const NAV = [
+  ['home',    ICON.home,    'Обзор'],
+  ['upload',  ICON.upload,  'Загрузка данных'],
+  ['appeals', ICON.mail,    'Обращения'],
+  ['channel', ICON.channel, 'Канал ОСНОВЫ'],
+];
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+function toast(m){ const r = document.getElementById('toastRoot');
+  r.innerHTML = '<div class="toast">' + esc(m) + '</div>';
+  clearTimeout(toast._t); toast._t = setTimeout(() => r.innerHTML = '', 3400); }
+function modal(html){ document.getElementById('modalRoot').innerHTML =
+  '<div class="back" onclick="if(event.target===this)closeModal()"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>'; }
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
+function go(v){ S.view = v; render(); }
+
+/* ---------------- обзор ---------------- */
+function renderHome(){
+  const ждут = S.обращения.filter(a => a.status !== 'отвечено').length;
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><h1>Обзор</h1>
+      <p>Что происходит на контуре и что требует вашего решения.</p></div>
+
+    <div class="stats">
+      <div class="stat"><div class="badge-ico" style="background:var(--lilac); color:var(--primary)">${ICON.db}</div>
+        <div class="k">Материалов в базе</div><div class="v tnum">${S.загружено.строк}</div>
+        <div class="d">последняя загрузка ${esc(S.загружено.когда)}</div></div>
+      <div class="stat"><div class="badge-ico" style="background:${ждут ? 'var(--soft-beige)' : 'var(--soft-mint)'}; color:${ждут ? 'var(--warning)' : 'var(--success)'}">${ждут ? ICON.alert : ICON.check}</div>
+        <div class="k">Обращений без ответа</div><div class="v tnum">${ждут}</div>
+        <div class="d">${ждут ? 'норматив ответа — 3 дня' : 'все обращения закрыты'}</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-blue); color:#2563EB">${ICON.channel}</div>
+        <div class="k">Сообщений в канале</div><div class="v tnum">${S.канал.length}</div>
+        <div class="d">видят все учреждения</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-mint); color:var(--success)">${ICON.clock}</div>
+        <div class="k">Учреждений на контуре</div><div class="v tnum">1</div>
+        <div class="d">ИК-5, пилот</div></div>
+    </div>
+
+    ${ждут ? `<div class="note warn"><b>Ждут ответа: ${ждут}.</b> Ближайший срок — ${esc(S.обращения.find(a => a.status !== 'отвечено').due)}.
+      <button class="btn sm" style="margin-left:10px" onclick="go('appeals')">Перейти к обращениям</button></div>` : ''}
+
+    <h2 class="sect">Быстрые действия</h2>
+    <div class="stats">
+      <div class="card"><h3>Загрузить данные</h3>
+        <div class="top-sub">Выгрузка из ЗТ в заданном формате пополняет базу материалов.</div>
+        <div style="margin-top:14px"><button class="btn primary" onclick="go('upload')">Загрузить</button></div></div>
+      <div class="card"><h3>Ответить на обращение</h3>
+        <div class="top-sub">Ответ уходит заявителю и фиксируется в деле.</div>
+        <div style="margin-top:14px"><button class="btn" onclick="go('appeals')">Открыть список</button></div></div>
+      <div class="card"><h3>Написать в канал</h3>
+        <div class="top-sub">Сообщение увидят сотрудники всех учреждений на контуре.</div>
+        <div style="margin-top:14px"><button class="btn" onclick="go('channel')">Написать</button></div></div>
+      <div class="card"><h3>Что ещё сюда встанет</h3>
+        <div class="top-sub">Правила анализатора, пороги стопок, доступы учреждений, шаблоны актов.</div>
+        <div style="margin-top:14px"><span class="chip">в следующих версиях</span></div></div>
+    </div>
+  `;
+}
+
+/* ---------------- загрузка данных ---------------- */
+
+const КОЛОНКИ = ['id','дата','направление','канал','язык','отправитель','получатель','риск','резюме','основание','текст'];
+const РИСКИ = ['зелёный','оранжевый','красный'];
+const НАПРАВЛЕНИЯ = ['входящее','исходящее'];
+const КАНАЛЫ = ['письмо','голосовое','видео'];
+
+function renderUpload(){
+  const р = S.разбор;
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><h1>Загрузка данных</h1>
+      <p>Выгрузка из ЗТ пополняет базу материалов, с которой работают цензоры.</p></div>
+
+    <div class="split">
+      <div>
+        <div class="drop" id="drop" ondragover="event.preventDefault(); this.classList.add('over')"
+             ondragleave="this.classList.remove('over')" ondrop="onDrop(event)">
+          <div class="ico">${ICON.upload}</div>
+          <b>Перетащите файл сюда</b>
+          <span>или <button class="btn sm" onclick="document.getElementById('file').click()">выберите на компьютере</button></span>
+          <input type="file" id="file" accept=".csv,text/csv" onchange="onPick(event)">
+        </div>
+
+        ${р ? отчётРазбора(р) : ''}
+      </div>
+
+      <div>
+        <div class="card">
+          <h3>Формат файла</h3>
+          <div class="top-sub" style="margin-bottom:12px">Таблица Excel, сохранённая как <b>CSV UTF-8</b>, разделитель — точка с запятой.
+            Первая строка — заголовки ровно в таком порядке:</div>
+          <div class="code">${КОЛОНКИ.join(';')}</div>
+          <div style="margin-top:14px"><button class="btn sm" onclick="показатьПример()">Показать пример строки</button></div>
+        </div>
+        <div class="card">
+          <h3>Что проверяется</h3>
+          <div class="kv">
+            <div class="k">Колонки</div><div>все ${КОЛОНКИ.length} и в нужном порядке</div>
+            <div class="k">Риск</div><div>${РИСКИ.join(' · ')}</div>
+            <div class="k">Направление</div><div>${НАПРАВЛЕНИЯ.join(' · ')}</div>
+            <div class="k">Канал</div><div>${КАНАЛЫ.join(' · ')}</div>
+            <div class="k">Обязательные</div><div>id, дата, отправитель, получатель, риск</div>
+          </div>
+          <div class="note warn" style="margin-bottom:0">Строки с ошибками не загружаются. Остальные загружаются — файл целиком не отклоняется.</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function показатьПример(){
+  const пример = [
+    КОЛОНКИ.join(';'),
+    'ОБ-9001;28.08.2026 09:14;входящее;письмо;русский;Сидорова Анна Викторовна;Иванов Иван Иванович;зелёный;Бытовое сообщение семье;Автоматический контроль;Здравствуй. Дома всё хорошо, дети здоровы.',
+    'ОБ-9002;28.08.2026 09:31;исходящее;голосовое;узбекский;Каримов Рустам Шавкатович;Каримова Дилноза;оранжевый;Упоминание маршрута;Оперативный интерес;Всё как раньше, тот же маршрут.',
+  ].join('\n');
+  modal(`
+    <div class="mh"><h3>Пример файла</h3><button class="x" onclick="closeModal()" aria-label="Закрыть">×</button></div>
+    <div class="mb">
+      <div class="top-sub" style="margin-bottom:12px">Две строки данных после заголовка. Точка с запятой разделяет колонки,
+        перенос строки — материалы. Если в тексте есть точка с запятой, возьмите текст в кавычки.</div>
+      <div class="code">${esc(пример)}</div>
+    </div>
+    <div class="mf"><button class="btn primary" onclick="closeModal()">Понятно</button></div>`);
+}
+
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('drop').classList.remove('over');
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) читать(f);
+}
+function onPick(e){ const f = e.target.files && e.target.files[0]; if (f) читать(f); }
+
+function читать(file){
+  if (!/\.csv$/i.test(file.name)) {
+    S.разбор = { файл: file.name, фатально: 'Нужен файл CSV. Сохраните таблицу в Excel через «Файл → Сохранить как → CSV UTF-8».' };
+    render(); return;
+  }
+  const r = new FileReader();
+  r.onload = () => { S.разбор = разобрать(file.name, String(r.result)); render(); };
+  r.onerror = () => { S.разбор = { файл: file.name, фатально: 'Не удалось прочитать файл.' }; render(); };
+  r.readAsText(file, 'utf-8');
+}
+
+/* Разбор CSV: точка с запятой, кавычки для полей с разделителем внутри. */
+function строкаВПоля(строка){
+  const поля = []; let тек = '', вКавычках = false;
+  for (let i = 0; i < строка.length; i++) {
+    const c = строка[i];
+    if (c === '"') {
+      if (вКавычках && строка[i + 1] === '"') { тек += '"'; i++; }
+      else вКавычках = !вКавычках;
+    } else if (c === ';' && !вКавычках) { поля.push(тек); тек = ''; }
+    else тек += c;
+  }
+  поля.push(тек);
+  return поля.map(x => x.trim());
+}
+
+function разобрать(имя, текст){
+  const строки = текст.replace(/^﻿/, '').split(/\r?\n/).filter(x => x.trim());
+  if (!строки.length) return { файл: имя, фатально: 'Файл пустой.' };
+
+  const заголовки = строкаВПоля(строки[0]).map(x => x.toLowerCase());
+  const нехватает = КОЛОНКИ.filter(k => !заголовки.includes(k));
+  if (нехватает.length) {
+    return { файл: имя, фатально: 'В заголовке не хватает колонок: ' + нехватает.join(', ') +
+             '. Ожидаются: ' + КОЛОНКИ.join(', ') + '.' };
+  }
+  const индекс = {}; КОЛОНКИ.forEach(k => индекс[k] = заголовки.indexOf(k));
+
+  const годные = [], плохие = [];
+  for (let i = 1; i < строки.length; i++) {
+    const поля = строкаВПоля(строки[i]);
+    const зап = {}; КОЛОНКИ.forEach(k => зап[k] = поля[индекс[k]] || '');
+    const беды = [];
+    ['id','дата','отправитель','получатель','риск'].forEach(k => { if (!зап[k]) беды.push('пусто: ' + k); });
+    if (зап.риск && !РИСКИ.includes(зап.риск.toLowerCase())) беды.push('риск: «' + зап.риск + '»');
+    if (зап.направление && !НАПРАВЛЕНИЯ.includes(зап.направление.toLowerCase())) беды.push('направление: «' + зап.направление + '»');
+    if (зап.канал && !КАНАЛЫ.includes(зап.канал.toLowerCase())) беды.push('канал: «' + зап.канал + '»');
+    if (беды.length) плохие.push({ строка: i + 1, зап, беды });
+    else годные.push(зап);
+  }
+  return { файл: имя, всего: строки.length - 1, годные, плохие };
+}
+
+function отчётРазбора(р){
+  if (р.фатально) {
+    return `<div class="note bad" style="margin-top:18px"><b>Файл не подходит.</b> ${esc(р.фатально)}</div>`;
+  }
+  const показ = р.годные.slice(0, 8);
+  return `
+    <div class="card" style="margin-top:18px">
+      <h3>Файл: ${esc(р.файл)}</h3>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px">
+        <span class="chip">строк: ${р.всего}</span>
+        <span class="chip g">готовы к загрузке: ${р.годные.length}</span>
+        ${р.плохие.length ? `<span class="chip r">с ошибками: ${р.плохие.length}</span>` : '<span class="chip g">ошибок нет</span>'}
+      </div>
+
+      ${р.плохие.length ? `
+        <div class="note bad"><b>Строки с ошибками не загрузятся.</b> Поправьте их в Excel и загрузите файл ещё раз —
+          или загрузите сейчас только годные.</div>
+        <div class="tw" style="margin-bottom:16px"><table>
+          <tr><th>Строка</th><th>id</th><th>Что не так</th></tr>
+          ${р.плохие.slice(0, 20).map(b => `<tr class="bad"><td>${b.строка}</td><td>${esc(b.зап.id || '—')}</td><td>${esc(b.беды.join('; '))}</td></tr>`).join('')}
+        </table></div>` : ''}
+
+      ${показ.length ? `
+        <div class="top-sub" style="margin-bottom:8px">Предпросмотр первых ${показ.length}:</div>
+        <div class="tw"><table>
+          <tr><th>id</th><th>Дата</th><th>Отправитель → Получатель</th><th>Риск</th><th>Резюме</th></tr>
+          ${показ.map(z => `<tr><td>${esc(z.id)}</td><td>${esc(z.дата)}</td>
+            <td>${esc(z.отправитель)} → ${esc(z.получатель)}</td>
+            <td><span class="chip ${z.риск === 'зелёный' ? 'g' : z.риск === 'оранжевый' ? 'o' : 'r'}">${esc(z.риск)}</span></td>
+            <td>${esc(z.резюме)}</td></tr>`).join('')}
+        </table></div>` : ''}
+
+      <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn" onclick="S.разбор=null; render()">Отменить</button>
+        <button class="btn primary" onclick="загрузить()" ${р.годные.length ? '' : 'disabled'}>
+          Загрузить в базу · ${р.годные.length}</button>
+      </div>
+    </div>`;
+}
+
+function загрузить(){
+  const р = S.разбор; if (!р || !р.годные.length) return;
+  S.загружено = { когда: new Date().toLocaleString('ru-RU').replace(',', ''), строк: S.загружено.строк + р.годные.length, файл: р.файл };
+  const n = р.годные.length, б = р.плохие.length;
+  S.разбор = null; go('home');
+  toast('Загружено материалов: ' + n + (б ? '. Пропущено с ошибками: ' + б : ''));
+}
+
+/* ---------------- обращения ---------------- */
+
+function renderAppeals(){
+  const ждут = S.обращения.filter(a => a.status !== 'отвечено');
+  const готовы = S.обращения.filter(a => a.status === 'отвечено');
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><h1>Обращения</h1>
+      <p>Вопросы от заключённых и их родственников. Норматив ответа — 3 дня.</p></div>
+
+    <h2 class="sect">Ждут ответа · ${ждут.length}</h2>
+    ${ждут.length ? `<div class="rows">${ждут.map(строкаОбращения).join('')}</div>`
+      : `<div class="empty"><b>Все обращения закрыты</b><div>Новые появятся здесь по мере поступления.</div></div>`}
+
+    ${готовы.length ? `<h2 class="sect">Отвечено · ${готовы.length}</h2>
+      <div class="rows">${готовы.map(строкаОбращения).join('')}</div>` : ''}
+  `;
+}
+function строкаОбращения(a){
+  const ждёт = a.status !== 'отвечено';
+  return `<div class="row">
+    <div class="stripe ${ждёт ? 'wait' : 'done'}"></div>
+    <div>
+      <div class="who">${esc(a.subject)}</div>
+      <div class="meta">${esc(a.id)} · ${esc(a.from)} · ${esc(a.source)} · поступило ${esc(a.received)}</div>
+      <div style="margin-top:9px; color:var(--muted); font-size:14px">${esc(a.text)}</div>
+      ${a.answer ? `<div class="note ok" style="margin-bottom:0"><b>Ответ от ${esc(a.answeredAt)}:</b> ${esc(a.answer)}</div>` : ''}
+    </div>
+    <div class="acts">
+      ${ждёт ? `<span class="chip o">до ${esc(a.due)}</span>
+                <button class="btn sm primary" onclick="ответить('${a.id}')">Ответить</button>`
+             : '<span class="chip g">отвечено</span>'}
+    </div>
+  </div>`;
+}
+
+function ответить(id){
+  const a = S.обращения.find(x => x.id === id); if (!a) return;
+  const шаблоны = {
+    'Порядок телефонных разговоров': 'Здравствуйте. Телефонные разговоры предоставляются в соответствии с установленным порядком. Заявление подаётся заранее через начальника отряда.',
+    'Статус сообщения': 'Здравствуйте. Ваше сообщение проверено и передано адресату. Срок проверки — до 3 рабочих дней.',
+    'Добавление номера': 'Здравствуйте. Для добавления номера в перечень разрешённых необходимо заявление и документы, подтверждающие родство.',
+  };
+  modal(`
+    <div class="mh"><div><h3>Ответ на обращение</h3>
+      <div class="top-sub">${esc(a.id)} · ${esc(a.from)} · ${esc(a.source)}</div></div>
+      <button class="x" onclick="closeModal()" aria-label="Закрыть">×</button></div>
+    <div class="mb">
+      <div class="card" style="margin-bottom:16px; background:var(--bg)">
+        <div style="font-weight:650; margin-bottom:6px">${esc(a.subject)}</div>
+        <div style="color:var(--muted)">${esc(a.text)}</div>
+      </div>
+      <label class="fld">Готовый текст
+        <select id="tpl" onchange="подставить()">
+          <option value="">— выбрать шаблон —</option>
+          ${Object.keys(шаблоны).map(k => `<option value="${esc(шаблоны[k])}">${esc(k)}</option>`).join('')}
+        </select></label>
+      <label class="fld">Ответ заявителю
+        <textarea id="ans" placeholder="Напишите ответ простыми словами"></textarea></label>
+      <div class="note">Ответ уходит заявителю и сохраняется в деле. Срок ответа: до ${esc(a.due)}.</div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">Отмена</button>
+      <button class="btn primary" onclick="отправитьОтвет('${a.id}')">Отправить ответ</button>
+    </div>`);
+}
+function подставить(){
+  const s = document.getElementById('tpl').value;
+  if (s) document.getElementById('ans').value = s;
+}
+function отправитьОтвет(id){
+  const a = S.обращения.find(x => x.id === id); if (!a) return;
+  const текст = (document.getElementById('ans') || {}).value || '';
+  if (!текст.trim()) { toast('Ответ пустой — напишите текст'); return; }
+  a.answer = текст.trim();
+  a.status = 'отвечено';
+  a.answeredAt = new Date().toLocaleString('ru-RU').replace(',', '');
+  a.answeredBy = 'Митина Е., продакт';
+  closeModal(); render();
+  toast('Ответ отправлен заявителю');
+}
+
+/* ---------------- канал ---------------- */
+
+function renderChannel(){
+  const list = [...S.канал].sort((x, y) => (y.pinned ? 1 : 0) - (x.pinned ? 1 : 0));
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><h1>Канал ОСНОВЫ</h1>
+      <p>Сообщения видят сотрудники всех учреждений на контуре, в своём рабочем месте.</p></div>
+
+    <div class="card">
+      <h3>Новое сообщение</h3>
+      <label class="fld">Кому
+        <select id="кому">
+          <option>Всем сотрудникам на контуре</option>
+          <option>Только цензорам</option>
+          <option>Только начальникам учреждений</option>
+          <option>Только ИК-5</option>
+        </select></label>
+      <label class="fld">Заголовок<input id="загл" placeholder="Коротко, о чём сообщение"></label>
+      <label class="fld">Текст<textarea id="текст" placeholder="Что нужно знать сотрудникам"></textarea></label>
+      <label style="display:flex; align-items:center; gap:10px; font-size:14.5px; color:var(--muted); margin-bottom:16px">
+        <input type="checkbox" id="закреп" style="width:18px; height:18px; margin:0">
+        Закрепить наверху — для важного и срочного
+      </label>
+      <button class="btn primary" onclick="отправитьВКанал()">Отправить</button>
+    </div>
+
+    <h2 class="sect">Опубликовано · ${list.length}</h2>
+    ${list.map(m => `
+      <div class="msg ${m.pinned ? 'pin' : ''}">
+        <div style="display:flex; justify-content:space-between; gap:14px; align-items:baseline; flex-wrap:wrap">
+          <div class="t">${esc(m.title)}</div>
+          <div style="display:flex; gap:8px; align-items:center">
+            ${m.pinned ? '<span class="chip a">закреплено</span>' : ''}
+            ${m.to ? `<span class="chip">${esc(m.to)}</span>` : ''}
+          </div>
+        </div>
+        <div class="top-sub" style="margin-top:4px">${esc(m.from)} · ${esc(m.at)}</div>
+        <div class="b">${esc(m.text)}</div>
+      </div>`).join('')}
+  `;
+}
+
+function отправитьВКанал(){
+  const загл = (document.getElementById('загл') || {}).value || '';
+  const текст = (document.getElementById('текст') || {}).value || '';
+  const кому = (document.getElementById('кому') || {}).value || '';
+  const закреп = (document.getElementById('закреп') || {}).checked;
+  if (!загл.trim() || !текст.trim()) { toast('Заполните заголовок и текст'); return; }
+
+  modal(`
+    <div class="mh"><h3>Отправить в канал</h3><button class="x" onclick="closeModal()" aria-label="Закрыть">×</button></div>
+    <div class="mb">
+      <div class="note warn"><b>Сообщение увидят все, кому оно адресовано.</b> Отозвать его нельзя — можно только опубликовать новое.</div>
+      <div class="kv" style="margin-top:16px">
+        <div class="k">Кому</div><div>${esc(кому)}</div>
+        <div class="k">Заголовок</div><div>${esc(загл)}</div>
+        <div class="k">Закрепить</div><div>${закреп ? 'да, наверху' : 'нет'}</div>
+      </div>
+      <div class="card" style="margin-top:16px; background:var(--bg)">${esc(текст)}</div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">Вернуться к правке</button>
+      <button class="btn primary" onclick="подтвердитьКанал()">Отправить</button>
+    </div>`);
+
+  S._черновик = { загл, текст, кому, закреп };
+}
+function подтвердитьКанал(){
+  const d = S._черновик; if (!d) return;
+  S.канал.unshift({
+    id: 'СО-' + (245 + S.канал.length),
+    from: 'Продакт ОСНОВЫ', role: 'Елена Митина',
+    at: new Date().toLocaleString('ru-RU').replace(',', ''),
+    pinned: d.закреп, to: d.кому, title: d.загл, text: d.текст,
+  });
+  S._черновик = null;
+  closeModal(); render();
+  toast('Сообщение опубликовано в канале');
+}
+
+/* ---------------- каркас ---------------- */
+
+function renderNav(){
+  const counts = { appeals: S.обращения.filter(a => a.status !== 'отвечено').length, channel: S.канал.length };
+  document.getElementById('nav').innerHTML = NAV.map(([v, i, t]) => {
+    const n = counts[v];
+    return `<button class="${S.view === v ? 'active' : ''}" onclick="go('${v}')">
+      <span class="ico">${i}</span><span>${t}</span>${n ? `<span class="badge tnum">${n}</span>` : ''}</button>`;
+  }).join('');
+}
+
+function render(){
+  renderNav();
+  const T = {
+    home:    ['Обзор', 'Состояние контура на 28 августа 2026'],
+    upload:  ['Загрузка данных', 'Выгрузка из ЗТ в базу материалов'],
+    appeals: ['Обращения', 'Вопросы от заключённых и родственников'],
+    channel: ['Канал ОСНОВЫ', 'Сообщения сотрудникам учреждений'],
+  }[S.view];
+  document.getElementById('topTitle').textContent = T[0];
+  document.getElementById('topSub').textContent = T[1];
+  ({ home: renderHome, upload: renderUpload, appeals: renderAppeals, channel: renderChannel })[S.view]();
+  window.scrollTo({ top: 0 });
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+render();
+</script>
