@@ -109,20 +109,13 @@ h2.sect{font-size:21px; font-weight:700; margin:30px 0 14px; letter-spacing:-.3p
 .drop span{color:var(--muted); font-size:14px}
 input[type=file]{display:none}
 
-/* ---------- ТАБЛИЦА. Тот же компонент, что в рабочем месте ----------
-   Вертикальных линий нет, заливки строк нет: состояние показывает .chip. */
-.tbl{width:100%; border-collapse:collapse; font-size:13.5px}
-.tbl th{background:var(--bg); text-align:left; vertical-align:bottom;
-  padding:11px 14px; font-weight:650; color:var(--muted);
-  border-bottom:1px solid var(--border); white-space:nowrap; position:sticky; top:0}
-.tbl td{padding:11px 14px; border-top:1px solid var(--border-soft);
-  vertical-align:top; overflow-wrap:anywhere}
-.tbl tbody tr:first-child td{border-top:0}
-.tbl tbody tr:hover td{background:var(--bg)}
-.tbl .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
-.tbl .sub{display:block; color:var(--muted); font-size:12.5px; margin-top:2px}
-.tbl-wrap{overflow:auto; max-height:380px; background:var(--surface);
-  border:1px solid var(--border); border-radius:var(--r-card)}
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{background:var(--bg); text-align:left; padding:10px 12px; font-weight:650; color:var(--muted);
+  border-bottom:1px solid var(--border); position:sticky; top:0}
+td{padding:10px 12px; border-bottom:1px solid var(--border-soft); vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.bad td{background:var(--soft-pink)}
+.tw{overflow:auto; max-height:380px; border:1px solid var(--border); border-radius:12px}
 
 .rows{display:flex; flex-direction:column; gap:10px}
 .row{display:grid; grid-template-columns:4px 1fr auto; gap:16px; align-items:start; background:var(--surface);
@@ -452,20 +445,19 @@ function отчётРазбора(р){
       ${р.плохие.length ? `
         <div class="note bad"><b>Строки с ошибками не загрузятся.</b> Поправьте их в Excel и загрузите файл ещё раз —
           или загрузите сейчас только годные.</div>
-        <div class="tbl-wrap" style="margin-bottom:16px"><table class="tbl">
-          <thead><tr><th class="num">Строка</th><th>id</th><th>Что не так</th></tr></thead>
-          <tbody>${р.плохие.slice(0, 20).map(b => `<tr><td class="num">${b.строка}</td><td>${esc(b.зап.id || '—')}</td>
-            <td><span class="chip r">не загрузится</span> ${esc(b.беды.join('; '))}</td></tr>`).join('')}</tbody>
+        <div class="tw" style="margin-bottom:16px"><table>
+          <tr><th>Строка</th><th>id</th><th>Что не так</th></tr>
+          ${р.плохие.slice(0, 20).map(b => `<tr class="bad"><td>${b.строка}</td><td>${esc(b.зап.id || '—')}</td><td>${esc(b.беды.join('; '))}</td></tr>`).join('')}
         </table></div>` : ''}
 
       ${показ.length ? `
         <div class="top-sub" style="margin-bottom:8px">Предпросмотр первых ${показ.length}:</div>
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>id</th><th>Дата</th><th>Отправитель → Получатель</th><th>Риск</th><th>Резюме</th></tr></thead>
-          <tbody>${показ.map(z => `<tr><td>${esc(z.id)}</td><td>${esc(z.дата)}</td>
+        <div class="tw"><table>
+          <tr><th>id</th><th>Дата</th><th>Отправитель → Получатель</th><th>Риск</th><th>Резюме</th></tr>
+          ${показ.map(z => `<tr><td>${esc(z.id)}</td><td>${esc(z.дата)}</td>
             <td>${esc(z.отправитель)} → ${esc(z.получатель)}</td>
             <td><span class="chip ${z.риск === 'зелёный' ? 'g' : z.риск === 'оранжевый' ? 'o' : 'r'}">${esc(z.риск)}</span></td>
-            <td>${esc(z.резюме)}</td></tr>`).join('')}</tbody>
+            <td>${esc(z.резюме)}</td></tr>`).join('')}
         </table></div>` : ''}
 
       <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap">
