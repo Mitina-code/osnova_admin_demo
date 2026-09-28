@@ -109,6 +109,21 @@ h2.sect{font-size:21px; font-weight:700; margin:30px 0 14px; letter-spacing:-.3p
 .drop span{color:var(--muted); font-size:14px}
 input[type=file]{display:none}
 
+/* Две колонки для парных полей и выпадающий список — под тот же вид,
+   что и остальные поля формы. */
+.два{display:grid; grid-template-columns:1fr 1fr; gap:0 14px}
+@media (max-width:640px){ .два{grid-template-columns:1fr} }
+.fld select{
+  display:block; width:100%; margin-top:7px; background:var(--surface); color:var(--text);
+  border:1px solid var(--border); border-radius:var(--r-input);
+  padding:11px 14px; font-size:15px; line-height:1.5; cursor:pointer;
+}
+.fld select:focus{outline:0; border-color:var(--primary); box-shadow:0 0 0 3px rgba(111,61,255,.14)}
+ul.plain{list-style:none; padding:0; margin:0}
+ul.plain li{position:relative; padding-left:24px; margin-bottom:9px; font-size:14.5px}
+ul.plain li:before{content:''; position:absolute; left:6px; top:9px; width:6px; height:6px;
+  border-radius:50%; background:var(--primary)}
+
 table{width:100%; border-collapse:collapse; font-size:13.5px}
 th{background:var(--bg); text-align:left; padding:10px 12px; font-weight:650; color:var(--muted);
   border-bottom:1px solid var(--border); position:sticky; top:0}
@@ -231,6 +246,7 @@ const ICON = {
   clock:   SVG('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
   check:   SVG('<path d="M20 6L9 17l-5-5"/>'),
   alert:   SVG('<path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/>'),
+  staff:   SVG('<circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0114 0"/>'),
 };
 
 /* ---------------- состояние ---------------- */
@@ -240,6 +256,10 @@ const S = {
   разбор: null,          // результат разбора выбранного файла
   канал: [...REF.channel],
   обращения: REF.appeals.map(a => ({ ...a })),
+  /* Ответственный представитель ЗТ по учреждению. Нужен не для справки:
+     о каждом вольнонаёмном сотруднике ему уходит уведомление, потому что
+     с такими заключается договор. */
+  представитель: { ...(REF.rep || { role: 'РП', name: '', region: '', phone: '', email: '', facilities: [] }) },
 };
 
 const NAV = [
@@ -247,6 +267,7 @@ const NAV = [
   ['upload',  ICON.upload,  'Загрузка данных'],
   ['appeals', ICON.mail,    'Обращения'],
   ['channel', ICON.channel, 'Канал ОСНОВЫ'],
+  ['rep',     ICON.staff,   'Представитель'],
 ];
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
@@ -637,6 +658,84 @@ function подтвердитьКанал(){
   toast('Сообщение опубликовано в канале');
 }
 
+/* ---------------- ответственный представитель ---------------- */
+
+/* За учреждением закреплён региональный представитель (РП) или
+   региональный директор (РД). Как только в учреждении появляется
+   вольнонаёмный сотрудник — цензор или бухгалтер, — ему уходит письмо:
+   с такими заключается договор, и тянуть с этим нельзя. */
+
+function renderRep(){
+  const p = S.представитель;
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><h1>Ответственный представитель</h1>
+      <p>Кто из ЗТ отвечает за учреждение и получает уведомления о вольнонаёмных сотрудниках.</p></div>
+
+    <div class="note">Когда цензор отмечает себя вольнонаёмной — или начальник учреждения
+      снимает с кого-то аттестацию, — на этот адрес автоматически уходит письмо.
+      С вольнонаёмными заключается договор, поэтому уведомление отправляется сразу.</div>
+
+    <div class="card">
+      <h3>Контакты</h3>
+      <div class="два">
+        <label class="fld">Роль
+          <select id="repRole" onchange="S.представитель.role=this.value">
+            <option value="РП" ${p.role === 'РП' ? 'selected' : ''}>РП — региональный представитель</option>
+            <option value="РД" ${p.role === 'РД' ? 'selected' : ''}>РД — региональный директор</option>
+          </select></label>
+        <label class="fld">Регион
+          <input id="repRegion" value="${esc(p.region)}" oninput="S.представитель.region=this.value"></label>
+      </div>
+      <label class="fld">Фамилия, имя, отчество
+        <input id="repName" value="${esc(p.name)}" oninput="S.представитель.name=this.value"></label>
+      <div class="два">
+        <label class="fld">Телефон
+          <input id="repPhone" value="${esc(p.phone)}" oninput="S.представитель.phone=this.value"></label>
+        <label class="fld">Почта для уведомлений
+          <input id="repMail" value="${esc(p.email)}" oninput="S.представитель.email=this.value"></label>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn primary" onclick="сохранитьПредставителя()">Сохранить</button>
+        <button class="btn" onclick="проверитьУведомление()">Показать образец письма</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Закреплённые учреждения</h3>
+      <ul class="plain">${(p.facilities || []).map(x => `<li>${esc(x)}</li>`).join('') ||
+        '<li>учреждения не закреплены</li>'}</ul>
+      <div class="top-sub">Уведомления приходят по всем закреплённым учреждениям.</div>
+    </div>`;
+}
+
+function сохранитьПредставителя(){
+  const p = S.представитель;
+  if (!p.name.trim() || !p.email.trim()) { toast('Нужны хотя бы фамилия и почта'); return; }
+  if (p.email.indexOf('@') < 0) { toast('Почта указана неверно'); return; }
+  toast('Сохранено. Уведомления пойдут на ' + p.email);
+}
+
+function проверитьУведомление(){
+  const p = S.представитель;
+  modal(`
+    <div class="mh"><div><h3>Образец уведомления</h3>
+      <div class="top-sub">Так выглядит письмо, которое уйдёт автоматически</div></div>
+      <button class="x" onclick="closeModal()" aria-label="Закрыть">×</button></div>
+    <div class="mb">
+      <div class="kv">
+        <div class="k">Кому</div><div>${esc(p.email || '—')}</div>
+        <div class="k">Тема</div><div>Неаттестованный сотрудник: Соколова Елена Сергеевна, ИК-5</div>
+      </div>
+      <div class="body-text" style="margin-top:14px; white-space:pre-wrap">Соколова Елена Сергеевна, цензор ФКУ ИК-5, отмечена в ОСНОВЕ как вольнонаёмный сотрудник.
+
+С вольнонаёмными сотрудниками заключается договор. Просим связаться с учреждением для оформления.
+
+Учреждение: Федеральное казённое учреждение «Исправительная колония № 5»
+Дата отметки: 28.08.2026 09:14</div>
+    </div>
+    <div class="mf"><button class="btn primary" onclick="closeModal()">Закрыть</button></div>`);
+}
+
 /* ---------------- каркас ---------------- */
 
 function renderNav(){
@@ -655,10 +754,11 @@ function render(){
     upload:  ['Загрузка данных', 'Выгрузка из ЗТ в базу материалов'],
     appeals: ['Обращения', 'Вопросы от заключённых и родственников'],
     channel: ['Канал ОСНОВЫ', 'Сообщения сотрудникам учреждений'],
+    rep:     ['Ответственный представитель', 'Кому уходят уведомления по учреждению'],
   }[S.view];
   document.getElementById('topTitle').textContent = T[0];
   document.getElementById('topSub').textContent = T[1];
-  ({ home: renderHome, upload: renderUpload, appeals: renderAppeals, channel: renderChannel })[S.view]();
+  ({ home: renderHome, upload: renderUpload, appeals: renderAppeals, channel: renderChannel, rep: renderRep })[S.view]();
   window.scrollTo({ top: 0 });
 }
 
