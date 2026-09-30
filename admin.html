@@ -267,6 +267,7 @@ const NAV = [
   ['upload',  ICON.upload,  'Загрузка данных'],
   ['appeals', ICON.mail,    'Обращения'],
   ['channel', ICON.channel, 'Канал ОСНОВЫ'],
+  ['staff',   ICON.staff,   'Сотрудники и доступы'],
   ['rep',     ICON.staff,   'Представитель'],
 ];
 
@@ -278,6 +279,165 @@ function modal(html){ document.getElementById('modalRoot').innerHTML =
   '<div class="back" onclick="if(event.target===this)closeModal()"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>'; }
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 function go(v){ S.view = v; render(); }
+
+/* ---------------- сотрудники и доступы ---------------- */
+
+const СОТРУДНИКИ = (REF.staff || []).map(s => ({ ...s, sections: (s.sections || []).slice() }));
+
+/* ---------- совмещение ролей галочками ----------
+
+   Доступ выдаётся не ролью, а набором разделов. Галочка ставится на группу
+   целиком: «Цензура», «Оперативная работа», «Руководство учреждением»,
+   «Контроль переговоров». Поэкранных галочек нет намеренно — их было бы
+   полсотни, и кончилось бы тем, что ставят все подряд.
+
+   Одно ограничение жёсткое: два набора требуют аттестации. Вольнонаёмный
+   сотрудник работает по трудовому договору и не может ни подписывать
+   документы, ни видеть оперативные сведения. Галочка у него просто
+   не ставится, и рядом написано почему.
+*/
+
+const НАБОРЫ = REF.accessSections || [];
+const НАБОРЫ_ВСЕМ = REF.sectionsForAll || [];
+
+function наборыСотрудника(s){
+  return Array.isArray(s.sections) ? s.sections : [];
+}
+
+function разделПоКлючу(к){ return НАБОРЫ.find(р => р.ключ === к); }
+
+function меткиНаборов(s){
+  const наб = наборыСотрудника(s);
+  if (!наб.length) return '<span class="chip o">наборы не заданы</span>';
+  return наб.map(к => {
+    const р = разделПоКлючу(к);
+    return `<span class="chip a" title="${esc(р ? р.экраны.join(', ') : '')}">${esc(р ? р.имя : к)}</span>`;
+  }).join('') + (наб.length > 1
+    ? '<span class="chip">совмещает ' + наб.length + '</span>' : '');
+}
+
+function открытьДоступ(id){
+  const s = СОТРУДНИКИ.find(x => x.id === id); if (!s) return;
+  S.доступЧерновик = наборыСотрудника(s).slice();
+  показатьДоступ(id);
+}
+
+function показатьДоступ(id){
+  const s = СОТРУДНИКИ.find(x => x.id === id); if (!s) return;
+  const выбрано = S.доступЧерновик || [];
+
+  modal(`
+    <div class="mh"><div><h3>Доступ: ${esc(s.name)}</h3>
+      <div class="top-sub">${esc(s.role)}${s.unit ? ' · ' + esc(s.unit) : ''} ·
+        ${s.attested ? 'аттестованный' : 'вольнонаёмный'}</div></div>
+      <button class="x" onclick="closeModal()" aria-label="Закрыть">×</button></div>
+    <div class="mb">
+      <div class="note" style="margin-top:0">Отмечайте целыми наборами. Один человек может
+        закрывать несколько участков — тогда у него в меню появятся разделы всех отмеченных наборов.</div>
+
+      ${НАБОРЫ.map(р => {
+        const есть = выбрано.includes(р.ключ);
+        const нельзя = р.требуетАттестации && !s.attested;
+        return `
+          <label class="набор ${есть ? 'вкл' : ''} ${нельзя ? 'нельзя' : ''}">
+            <input type="checkbox" ${есть ? 'checked' : ''} ${нельзя ? 'disabled' : ''}
+              onchange="переключитьНабор('${id}','${р.ключ}')">
+            <div>
+              <b>${esc(р.имя)}</b>
+              <div class="набор-суть">${esc(р.суть)}</div>
+              <div class="набор-экраны">${р.экраны.map(э => `<span>${esc(э)}</span>`).join('')}</div>
+              ${нельзя ? `<div class="набор-нельзя">Недоступно вольнонаёмному сотруднику:
+                подпись документов и оперативные сведения требуют аттестации.</div>` : ''}
+            </div>
+          </label>`;
+      }).join('')}
+
+      <div class="note">Есть у всех независимо от наборов: ${НАБОРЫ_ВСЕМ.join(', ')}.</div>
+
+      ${выбрано.length === 0 ? `<div class="note warn">Не отмечено ни одного набора —
+        сотрудник войдёт, но рабочих разделов не увидит.</div>` : ''}
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">Отмена</button>
+      <button class="btn primary" onclick="сохранитьДоступ('${id}')">Сохранить</button>
+    </div>`);
+}
+
+function переключитьНабор(id, ключ){
+  const н = S.доступЧерновик || [];
+  S.доступЧерновик = н.includes(ключ) ? н.filter(к => к !== ключ) : н.concat(ключ);
+  показатьДоступ(id);
+}
+
+function сохранитьДоступ(id){
+  const s = СОТРУДНИКИ.find(x => x.id === id); if (!s) return;
+  s.sections = (S.доступЧерновик || []).slice();
+  closeModal();
+  toast(s.sections.length
+    ? `${s.name}: ${s.sections.map(к => (разделПоКлючу(к) || {}).имя || к).join(', ')}`
+    : `${s.name}: наборы сняты, рабочих разделов не будет`);
+  render();
+}
+
+
+function renderStaff(){
+  const q = (S.поискСотрудника || '').toLowerCase();
+  const список = q
+    ? СОТРУДНИКИ.filter(s => (s.name + ' ' + s.role).toLowerCase().includes(q))
+    : СОТРУДНИКИ;
+  const совмещают = СОТРУДНИКИ.filter(s => (s.sections || []).length > 1).length;
+  const безНаборов = СОТРУДНИКИ.filter(s => !(s.sections || []).length).length;
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-head"><h1>Сотрудники и доступы</h1>
+      <p>Доступ выдаётся не должностью, а набором разделов. Один человек может
+         закрывать несколько участков сразу — отмечается галочками.</p></div>
+
+    <div class="stats">
+      <div class="stat"><div class="badge-ico" style="background:var(--lilac); color:var(--primary)">${ICON.staff}</div>
+        <div class="k">Сотрудников</div><div class="v tnum">${СОТРУДНИКИ.length}</div>
+        <div class="d">на контуре учреждения</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-blue); color:#2563EB">${ICON.check}</div>
+        <div class="k">Совмещают участки</div><div class="v tnum">${совмещают}</div>
+        <div class="d">два набора и больше</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-beige); color:var(--warning)">${ICON.alert}</div>
+        <div class="k">Без наборов</div><div class="v tnum">${безНаборов}</div>
+        <div class="d">войдут, но разделов не увидят</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-mint); color:var(--success)">${ICON.staff}</div>
+        <div class="k">Вольнонаёмных</div><div class="v tnum">${СОТРУДНИКИ.filter(s => !s.attested).length}</div>
+        <div class="d">по трудовому договору</div></div>
+    </div>
+
+    <div class="note">Два набора — «Оперативная работа» и «Руководство учреждением» —
+      требуют аттестации: подпись документов и оперативные сведения вольнонаёмному
+      сотруднику недоступны. У таких сотрудников галочка не ставится.</div>
+
+    <div class="bar">
+      <input id="sq" class="search" placeholder="Поиск по фамилии или должности"
+             value="${esc(S.поискСотрудника || '')}"
+             oninput="S.поискСотрудника = this.value; renderStaff(); document.getElementById('sq').focus()">
+      <span class="chip">${список.length} из ${СОТРУДНИКИ.length}</span>
+    </div>
+
+    <div class="rows">
+      ${список.slice(0, 40).map(s => `
+        <div class="row">
+          <div class="stripe ${(s.sections || []).length ? 'g' : 'o'}"></div>
+          <div>
+            <div class="who">${esc(s.name)}</div>
+            <div class="meta">${esc(s.role)}${s.unit ? ' · ' + esc(s.unit) : ''}</div>
+            <div class="marks" style="margin-top:6px">
+              <span class="chip ${s.attested ? 'a' : 'o'}">${s.attested ? 'аттестованный' : 'вольнонаёмный'}</span>
+              ${меткиНаборов(s)}
+            </div>
+          </div>
+          <div></div>
+          <div class="acts"><button class="btn sm primary" onclick="открытьДоступ('${s.id}')">Доступ</button></div>
+        </div>`).join('')}
+    </div>
+    ${список.length > 40 ? `<div class="more"><span class="chip">показаны первые 40 из ${список.length}</span></div>` : ''}
+  `;
+}
 
 /* ---------------- обзор ---------------- */
 function renderHome(){
@@ -750,15 +910,17 @@ function renderNav(){
 function render(){
   renderNav();
   const T = {
-    home:    ['Обзор', 'Состояние контура на 28 августа 2026'],
+    home:    ['Обзор', 'Состояние контура на 28 сентября 2026'],
     upload:  ['Загрузка данных', 'Выгрузка из ЗТ в базу материалов'],
     appeals: ['Обращения', 'Вопросы от заключённых и родственников'],
     channel: ['Канал ОСНОВЫ', 'Сообщения сотрудникам учреждений'],
+    staff:   ['Сотрудники и доступы', 'Кто и к каким разделам допущен'],
     rep:     ['Ответственный представитель', 'Кому уходят уведомления по учреждению'],
   }[S.view];
   document.getElementById('topTitle').textContent = T[0];
   document.getElementById('topSub').textContent = T[1];
-  ({ home: renderHome, upload: renderUpload, appeals: renderAppeals, channel: renderChannel, rep: renderRep })[S.view]();
+  ({ home: renderHome, upload: renderUpload, appeals: renderAppeals, channel: renderChannel,
+     staff: renderStaff, rep: renderRep })[S.view]();
   window.scrollTo({ top: 0 });
 }
 
