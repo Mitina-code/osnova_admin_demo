@@ -32,6 +32,8 @@ svg{flex:none}
 .brand img{height:26px; width:auto; display:block}
 .brand-name{font-size:17px; font-weight:700}
 .brand-sub{font-size:12px; color:var(--muted); margin-top:1px}
+.seg.сборный{flex-wrap:wrap; height:auto; padding:6px}
+.seg.сборный button{white-space:normal; text-align:left; line-height:1.35; padding:7px 11px}
 .rolebox{background:var(--lilac); border:1px solid #D6CCFB; border-radius:12px; padding:10px 12px; margin-bottom:16px}
 .rolebox .lab{font-size:11px; color:var(--primary); text-transform:uppercase; letter-spacing:.7px; font-weight:700}
 .rolebox .val{font-weight:650; margin-top:2px; font-size:15px; color:var(--primary)}
@@ -267,6 +269,7 @@ const NAV = [
   ['upload',  ICON.upload,  'Загрузка данных'],
   ['appeals', ICON.mail,    'Обращения'],
   ['channel', ICON.channel, 'Канал ОСНОВЫ'],
+  ['leisure', ICON.mail,    'Каталог занятости'],
   ['staff',   ICON.staff,   'Сотрудники и доступы'],
   ['rep',     ICON.staff,   'Представитель'],
 ];
@@ -279,6 +282,170 @@ function modal(html){ document.getElementById('modalRoot').innerHTML =
   '<div class="back" onclick="if(event.target===this)closeModal()"><div class="modal" role="dialog" aria-modal="true">' + html + '</div></div>'; }
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 function go(v){ S.view = v; render(); }
+
+/* ---------------- каталог полезной занятости ----------------
+
+   Здесь ЗТ выкладывает материалы, которые родственники отправляют
+   заключённым как заботу. Выложенное не уходит к людям сразу: каждую
+   позицию один раз смотрит цензор учреждения. Поэтому в списке видно
+   не только что выложено, но и что прошло проверку, а что застряло.
+*/
+
+const КАТАЛОГ = (REF.leisure || []).map(п => ({ ...п }));
+const КАТ_ВИДЫ = REF.leisureKinds || [];
+let КАТ_НОМЕР = КАТАЛОГ.reduce((м, п) => Math.max(м, Number(String(п.id).replace(/[^0-9]/g, '')) || 0), 2000);
+
+function катВид(в){ return КАТ_ВИДЫ.find(x => x.вид === в) || { имя: в }; }
+
+function катСтатус(п){
+  if (п.решение === 'allow') return ['g', 'прошло цензуру'];
+  if (п.решение === 'deny') return ['r', 'не допущено'];
+  return ['o', п.отправленийСегодня ? 'у цензора' : 'ждёт первой отправки'];
+}
+
+function добавитьМатериал(){
+  S.новыйВид = (КАТ_ВИДЫ[0] || {}).вид || 'рассказ';
+  показатьФормуМатериала();
+}
+
+function показатьФормуМатериала(){
+  modal(`
+    <div class="mh"><div><h3>Новый материал в каталог</h3>
+      <div class="top-sub">№ ПЗ-${КАТ_НОМЕР + 1}</div></div>
+      <button class="x" onclick="closeModal()" aria-label="Закрыть">×</button></div>
+    <div class="mb">
+      <div class="note" style="margin-top:0">Материал появится в каталоге у родственников
+        и заключённых, но передавать его начнут только после того, как цензор учреждения
+        проверит эту позицию — один раз, а не в каждом отправлении.</div>
+
+      <label class="fld">Вид материала</label>
+      <div class="seg сборный" style="margin-bottom:12px">
+        ${КАТ_ВИДЫ.map(в => `<button class="${в.вид === S.новыйВид ? 'on' : ''}"
+          onclick="катВыбратьВид(this, '${в.вид}')">${esc(в.имя)}</button>`).join('')}
+      </div>
+
+      <label class="fld">Название<input id="катИмя" placeholder="Как увидят в каталоге"></label>
+      <label class="fld">Что внутри<input id="катСуть" placeholder="Одна строка для цензора"></label>
+
+      <div class="note">Файл материала в прототипе не загружается: показывается схема листа
+        по выбранному виду.</div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">Отмена</button>
+      <button class="btn primary" onclick="сохранитьМатериал()">Выложить в каталог</button>
+    </div>`);
+}
+
+function катВыбратьВид(кнопка, вид){
+  [...кнопка.parentNode.children].forEach(б => б.classList.remove('on'));
+  кнопка.classList.add('on');
+  S.новыйВид = вид;
+}
+
+function сохранитьМатериал(){
+  const имя = (document.getElementById('катИмя') || {}).value || '';
+  if (!имя.trim()) { toast('Не указано название'); return; }
+  const в = катВид(S.новыйВид);
+  КАТАЛОГ.unshift({
+    id: 'ПЗ-' + (++КАТ_НОМЕР),
+    вид: S.новыйВид,
+    имя: имя.trim(),
+    суть: ((document.getElementById('катСуть') || {}).value || '').trim() || 'Описание не указано.',
+    цвет: !!в.цвет,
+    страниц: 1,
+    добавлен: '28.09.2026',
+    днейВКаталоге: 0,
+    отправленийВсего: 0,
+    отправленийСегодня: 0,
+    решение: null, основание: null, проверил: null, проверен: null,
+    свежий: true,
+  });
+  closeModal();
+  toast('Выложено. Цензор увидит позицию, как только её кто-нибудь отправит.');
+  render();
+}
+
+function renderLeisureAdmin(){
+  const вид = S.катВид || 'all';
+  const q = (S.катПоиск || '').toLowerCase();
+  let список = КАТАЛОГ;
+  if (вид !== 'all') список = список.filter(п => п.вид === вид);
+  if (q) список = список.filter(п => (п.имя + ' ' + п.id).toLowerCase().includes(q));
+
+  const ждут = КАТАЛОГ.filter(п => !п.решение).length;
+  const прошли = КАТАЛОГ.filter(п => п.решение === 'allow').length;
+  const отказ = КАТАЛОГ.filter(п => п.решение === 'deny').length;
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-head head-row">
+      <div><h1>Каталог занятости</h1>
+        <p>Материалы, которые родственники отправляют заключённым как заботу.
+           Каждую позицию цензор учреждения проверяет один раз.</p></div>
+      <div class="head-acts">
+        <button class="btn primary" onclick="добавитьМатериал()">Выложить материал</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="badge-ico" style="background:var(--lilac); color:var(--primary)">${ICON.mail}</div>
+        <div class="k">Позиций в каталоге</div><div class="v tnum">${КАТАЛОГ.length}</div>
+        <div class="d">выложено ЗТ</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-mint); color:var(--success)">${ICON.check}</div>
+        <div class="k">Прошли цензуру</div><div class="v tnum">${прошли}</div>
+        <div class="d">уходят без повторной проверки</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-beige); color:var(--warning)">${ICON.alert}</div>
+        <div class="k">Ждут решения</div><div class="v tnum">${ждут}</div>
+        <div class="d">цензор смотрит при первой отправке</div></div>
+      <div class="stat"><div class="badge-ico" style="background:var(--soft-pink); color:var(--danger)">${ICON.alert}</div>
+        <div class="k">Не допущено</div><div class="v tnum">${отказ}</div>
+        <div class="d">с основанием от цензора</div></div>
+    </div>
+
+    <div class="bar">
+      <span class="lab">Вид:</span>
+      <div class="seg">
+        <button class="${вид === 'all' ? 'on' : ''}" onclick="S.катВид='all'; render()">Все</button>
+        ${КАТ_ВИДЫ.map(в => {
+          const n = КАТАЛОГ.filter(п => п.вид === в.вид).length;
+          return n ? `<button class="${вид === в.вид ? 'on' : ''}"
+            onclick="S.катВид='${в.вид}'; render()">${esc(в.имя)} · ${n}</button>` : '';
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="bar">
+      <input id="кq" class="search" placeholder="Поиск по названию или номеру"
+             value="${esc(S.катПоиск || '')}"
+             oninput="S.катПоиск = this.value; renderLeisureAdmin(); document.getElementById('кq').focus()">
+      <span class="chip">${список.length} из ${КАТАЛОГ.length}</span>
+    </div>
+
+    <div class="rows">
+      ${список.slice(0, 60).map(п => {
+        const [цвет, слово] = катСтатус(п);
+        return `<div class="row">
+          <div class="stripe ${цвет}"></div>
+          <div>
+            <div class="who">${esc(п.имя)}${п.свежий ? ' <span class="chip g">только что</span>' : ''}</div>
+            <div class="meta">${esc(катВид(п.вид).имя)} · выложено ${esc(п.добавлен)}</div>
+            <div class="marks">
+              <span class="chip">${esc(п.id)}</span>
+              <span class="chip ${цвет}">${слово}</span>
+              <span class="chip">${п.цвет ? 'цветная печать' : 'чёрно-белая'}</span>
+            </div>
+          </div>
+          <div>
+            <div class="sum">отправляли: ${п.отправленийВсего}</div>
+            ${п.основание ? `<div class="why">Отказ: ${esc(п.основание)}</div>`
+              : `<div class="why">${esc(п.суть)}</div>`}
+          </div>
+          <div class="acts"></div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${список.length > 60 ? `<div class="more"><span class="chip">показаны первые 60 из ${список.length}</span></div>` : ''}
+  `;
+}
 
 /* ---------------- сотрудники и доступы ---------------- */
 
@@ -915,12 +1082,13 @@ function render(){
     appeals: ['Обращения', 'Вопросы от заключённых и родственников'],
     channel: ['Канал ОСНОВЫ', 'Сообщения сотрудникам учреждений'],
     staff:   ['Сотрудники и доступы', 'Кто и к каким разделам допущен'],
+    leisure: ['Каталог занятости', 'Материалы для заботы: что выложено и что прошло цензуру'],
     rep:     ['Ответственный представитель', 'Кому уходят уведомления по учреждению'],
   }[S.view];
   document.getElementById('topTitle').textContent = T[0];
   document.getElementById('topSub').textContent = T[1];
   ({ home: renderHome, upload: renderUpload, appeals: renderAppeals, channel: renderChannel,
-     staff: renderStaff, rep: renderRep })[S.view]();
+     staff: renderStaff, leisure: renderLeisureAdmin, rep: renderRep })[S.view]();
   window.scrollTo({ top: 0 });
 }
 
