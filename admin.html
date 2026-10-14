@@ -269,7 +269,7 @@ const NAV = [
   ['upload',  ICON.upload,  'Загрузка данных'],
   ['appeals', ICON.mail,    'Обращения'],
   ['channel', ICON.channel, 'Канал ОСНОВЫ'],
-  ['leisure', ICON.mail,    'Каталог занятости'],
+  ['leisure', ICON.mail,    'Каталог вложений'],
   ['staff',   ICON.staff,   'Сотрудники и доступы'],
   ['rep',     ICON.staff,   'Представитель'],
 ];
@@ -283,7 +283,7 @@ function modal(html){ document.getElementById('modalRoot').innerHTML =
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 function go(v){ S.view = v; render(); }
 
-/* ---------------- каталог полезной занятости ----------------
+/* ---------------- каталог печатных вложений ----------------
 
    Здесь ЗТ выкладывает материалы, которые родственники отправляют
    заключённым как заботу. Выложенное не уходит к людям сразу: каждую
@@ -378,7 +378,7 @@ function renderLeisureAdmin(){
 
   document.getElementById('content').innerHTML = `
     <div class="page-head head-row">
-      <div><h1>Каталог занятости</h1>
+      <div><h1>Каталог вложений</h1>
         <p>Материалы, которые родственники отправляют заключённым как заботу.
            Каждую позицию цензор учреждения проверяет один раз.</p></div>
       <div class="head-acts">
@@ -1082,7 +1082,7 @@ function render(){
     appeals: ['Обращения', 'Вопросы от заключённых и родственников'],
     channel: ['Канал ОСНОВЫ', 'Сообщения сотрудникам учреждений'],
     staff:   ['Сотрудники и доступы', 'Кто и к каким разделам допущен'],
-    leisure: ['Каталог занятости', 'Материалы для заботы: что выложено и что прошло цензуру'],
+    leisure: ['Каталог вложений', 'Что выложено для заботы и что прошло цензуру в учреждениях'],
     rep:     ['Ответственный представитель', 'Кому уходят уведомления по учреждению'],
   }[S.view];
   document.getElementById('topTitle').textContent = T[0];
